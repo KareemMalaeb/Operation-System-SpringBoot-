@@ -1,4 +1,4 @@
-package com.example.OperationSystem;
+package com.example.OperationSystem.config;
 
 import com.example.OperationSystem.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
@@ -8,17 +8,21 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class AppConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtFilter jwtFilter;
 
-    public AppConfig(CustomUserDetailsService customUserDetailsService) {
+    public AppConfig(CustomUserDetailsService customUserDetailsService, JwtFilter jwtFilter) {
         this.customUserDetailsService = customUserDetailsService;
+        this.jwtFilter = jwtFilter;
     }
 
     @Bean
@@ -43,12 +47,15 @@ public class AppConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers( "/auth/**").permitAll()
+                .requestMatchers("/public/**", "/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> {});
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

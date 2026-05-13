@@ -19,6 +19,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     public String register(RegisterRequest request) {
         User user = new User();
@@ -26,16 +27,16 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("ROLE_USER");
         userRepository.save(user);
-        return "User registered successfully";
+        return jwtService.generateToken(request.getUsername());
     }
 
-    public String login(LoginRequest request){
+    public String login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
-        return "User logged in successfully";
+        return jwtService.generateToken(request.getUsername());
     }
 }
