@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f8fafc; margin:0; padding:0; }
+    .wrapper { max-width:600px; margin:40px auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+    .header  { background:#1d4ed8; padding:32px; text-align:center; }
+    .header h1 { color:#fff; margin:0; font-size:22px; letter-spacing:.5px; }
+    .header p  { color:#bfdbfe; margin:6px 0 0; font-size:13px; }
+    .body    { padding:32px; }
+    .greeting { font-size:16px; color:#1e293b; margin-bottom:16px; }
+    .card    { background:#f1f5f9; border-radius:8px; padding:20px 24px; margin:20px 0; }
+    .card h3 { margin:0 0 14px; font-size:13px; text-transform:uppercase; color:#64748b; letter-spacing:.8px; }
+    .row     { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0; }
+    .row:last-child { border-bottom:none; }
+    .label   { color:#64748b; font-size:14px; }
+    .value   { color:#0f172a; font-weight:600; font-size:14px; }
+    .badge   { display:inline-block; background:#dbeafe; color:#1d4ed8; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+    .cta     { text-align:center; margin:28px 0; }
+    .cta a   { background:#1d4ed8; color:#fff; padding:13px 32px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px; }
+    .footer  { background:#f8fafc; text-align:center; padding:20px; font-size:12px; color:#94a3b8; border-top:1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>⚓ FreightFlow</h1>
+    <p>Freight Forwarding Operations</p>
+  </div>
+
+  <div class="body">
+    <p class="greeting">Dear <strong th:text="${agentName}">Agent</strong>,</p>
+
+    <p style="color:#475569;font-size:14px;line-height:1.6">
+      We have a new freight inquiry and would like to request your best quotation.
+      Please review the details below and reply with your competitive rates.
+    </p>
+
+    <div class="card">
+      <h3>Inquiry Details</h3>
+      <div class="row">
+        <span class="label">Reference Code</span>
+        <span class="value" th:text="${inquiryCode}">ZK-001</span>
+      </div>
+      <div class="row">
+        <span class="label">Origin</span>
+        <span class="value" th:text="${origin}">China</span>
+      </div>
+      <div class="row">
+        <span class="label">Destination</span>
+        <span class="value" th:text="${destination}">Saudi Arabia</span>
+      </div>
+      <div class="row">
+        <span class="label">Freight Type</span>
+        <span class="badge" th:text="${freightType}">SEA</span>
+      </div>
+      <div class="row">
+        <span class="label">Container Type</span>
+        <span class="value" th:text="${containerType}">40' HC</span>
+      </div>
+      <div class="row" th:if="${details != null and !#strings.isEmpty(details)}">
+        <span class="label">Additional Details</span>
+        <span class="value" th:text="${details}"></span>
+      </div>
+    </div>
+
+    <p style="color:#475569;font-size:14px">
+      Please reply to this email with your quotation including:
+    </p>
+    <ul style="color:#475569;font-size:14px;line-height:2">
+      <li>Price (USD)</li>
+      <li>Transit time (days)</li>
+      <li>Any remarks or conditions</li>
+    </ul>
+
+    <div class="cta">
+      <a href="mailto:operations@freightflow.com?subject=Re: Inquiry [[${inquiryCode}]]">
+        Reply with Quotation
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    FreightFlow Operations · This is an automated inquiry email · Please do not modify the subject line when replying.
+  </div>
+</div>
+</body>
+</html>

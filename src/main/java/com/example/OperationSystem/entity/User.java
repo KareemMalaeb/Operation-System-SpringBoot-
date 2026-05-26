@@ -8,6 +8,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.OperationSystem.enums.Role;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,11 +30,24 @@ public class User implements UserDetails{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false, unique = true)
     private String username;
+    @Column(nullable = false, unique = true)
+    private String email;
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    public String getDisplayName() {
+        return this.username;
+    }
 
     @Override
 public Collection<? extends GrantedAuthority> getAuthorities() {

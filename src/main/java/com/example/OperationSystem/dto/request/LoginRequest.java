@@ -1,10 +1,10 @@
-package com.example.OperationSystem.dto;
+package com.example.OperationSystem.dto.request;
 
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class LoginRequest {
     private String username;
     private String password;
-    
+
 }
