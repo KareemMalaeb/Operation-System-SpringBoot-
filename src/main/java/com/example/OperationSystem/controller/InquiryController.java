@@ -121,7 +121,7 @@ public class InquiryController {
         @PathVariable Long id,
         @Valid @RequestBody SelectQuoteRequest request,
         @AuthenticationPrincipal User currentUser) {
-            return ResponseEntity.ok(quotationService.selectQuote(id, request.getQuotationId(), currentUser));
+            return ResponseEntity.ok(quotationService.selectQuote(id, request.getQuotationId(), request.getSellingPrice(), currentUser));
         }
 
     // sendToClient will fire the actual email to the client

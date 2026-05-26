@@ -10,6 +10,7 @@ import com.example.OperationSystem.enums.AgentStatus;
 @Entity
 @Table(name = "inquiry_agents")
 
+@Data
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class InquiryAgent {

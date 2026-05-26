@@ -15,7 +15,7 @@ public class InquiryRequest {
     private String origin;
     private String destination;
     private Encoterms encoterms;
-    private DG DG;
+    private DG dg;
     private String supplierLocation;
     private FreightType freightType;
     private ContainerType containerType;

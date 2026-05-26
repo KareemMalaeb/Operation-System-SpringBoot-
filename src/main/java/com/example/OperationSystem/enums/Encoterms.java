@@ -1,20 +1,15 @@
 package com.example.OperationSystem.enums;
 
-public enum Encoterm {
-
+public enum Encoterms {
     EXW("EXW"),
     FOB("FOB"),
     CIF("CIF"),
     DAP("DAP"),
     DDP("DDP");
-    
+
     private final String label;
 
-    Encoterm(String label) {
-        this.label = label;
-    }
+    Encoterms(String label) { this.label = label; }
 
-    public String getLabel() {
-        return label;
-    }
+    public String getLabel() { return label; }
 }

@@ -10,9 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class RegisterResponse {
     private Long id;
-    private String username;
+    private String name;
+    private String email;
     private String role;
-
-
-
 }

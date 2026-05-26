@@ -1,13 +1,16 @@
 package com.example.OperationSystem.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.example.OperationSystem.dto.request.AddQuotationRequest;
 import com.example.OperationSystem.dto.request.SendToAgentsRequest;
 import com.example.OperationSystem.dto.response.InquiryResponse;
+import com.example.OperationSystem.dto.response.QuotationResponse;
 import com.example.OperationSystem.entity.Agent;
 import com.example.OperationSystem.entity.Inquiry;
 import com.example.OperationSystem.entity.InquiryAgent;
@@ -111,11 +114,20 @@ public class QuotationService {
 
         return InquiryResponse.from(inquiry);        
         
-    }       
+    }
+
+    //______________________Get Quotations______________________
+
+    public List<QuotationResponse> getQuotations(Long inquiryId, User currentUser) {
+        Inquiry inquiry = findInquiry(inquiryId);
+        return quotationRepository.findByInquiry(inquiry).stream()
+                .map(QuotationResponse::from)
+                .collect(Collectors.toList());
+    }
 
     //______________________Select Quote______________________
     
-    public InquiryResponse selectQuote(long inquiryId, Long quotationId, User currentUser) {
+    public InquiryResponse selectQuote(long inquiryId, Long quotationId, BigDecimal sellingPrice, User currentUser) {
         Inquiry inquiry = findInquiry(inquiryId);
 
         List<Quotation> allQuotes = quotationRepository.findByInquiry(inquiry);
@@ -131,12 +143,13 @@ public class QuotationService {
             }
         });
 
-        // Select the chosen quotation
+        // Select the chosen quotation and set the selling price
         Quotation selected = allQuotes.stream()
                 .filter(q -> q.getId().equals(quotationId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Quotation not found with id: " + quotationId));
         selected.setIsSelected(true);
+        selected.setSellingPrice(sellingPrice);
         quotationRepository.save(selected);
 
         // Move status to QUOTES_COMPLETED
@@ -154,7 +167,7 @@ public class QuotationService {
     public InquiryResponse sendToClient(Long id, User currentUser) {
         Inquiry inquiry = findInquiry(id);
 
-        quotationRepository.findByInquiryAndIsSelectedTrue(inquiry)
+        Quotation selected = quotationRepository.findByInquiryAndIsSelectedTrue(inquiry)
                 .orElseThrow(() -> new BusinessException("No quote selected. Select the best quote first."));
 
         InquiryStatus prev = inquiry.getStatus();
@@ -164,7 +177,7 @@ public class QuotationService {
         logHistory(inquiry, prev, InquiryStatus.QUOTED_TO_CLIENT, currentUser,
                 "Final quotation sent to client");
 
-        emailService.sendClientQuotationEmail(inquiry);
+        emailService.sendClientQuotationEmail(inquiry, selected);
 
         return InquiryResponse.from(inquiry);
     }

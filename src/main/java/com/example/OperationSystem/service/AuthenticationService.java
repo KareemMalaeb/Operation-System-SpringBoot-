@@ -24,7 +24,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    
+
     public RegisterResponse register(RegisterRequest request) {
         User user = new User();
         user.setUsername(request.getName());
@@ -32,7 +32,7 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         User saved = userRepository.save(user);
-        return new RegisterResponse(saved.getId(), saved.getDisplayName(), request.getRole().name());
+        return new RegisterResponse(saved.getId(), saved.getDisplayName(), saved.getEmail(), request.getRole().name());
     }
 
     public LoginResponse login(LoginRequest request) {

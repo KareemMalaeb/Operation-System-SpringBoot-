@@ -41,14 +41,14 @@ public class AgentContoller {
         return ResponseEntity.ok(agentService.getAllAgents(currentUser));
     }
 
-    @GetMapping("/agent/{id}")
+    @GetMapping("/agents/{id}")
     public ResponseEntity<AgentResponse> getAgentById(
         @PathVariable Long id,
         @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(agentService.getAgentById(id, currentUser));
     }
 
-    @DeleteMapping("/agent/{id}")
+    @DeleteMapping("/agents/{id}")
     public ResponseEntity<Void> deleteAgentById(
         @PathVariable Long id,
         @AuthenticationPrincipal User currentUser) {
@@ -56,7 +56,7 @@ public class AgentContoller {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/agent/{id}")
+    @PutMapping("/agents/{id}")
     public ResponseEntity<AgentResponse> updateAgentById(
         @PathVariable Long id,
         @Valid @RequestBody CreateAgentRequest request,

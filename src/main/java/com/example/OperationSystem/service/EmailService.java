@@ -1,5 +1,8 @@
 package com.example.OperationSystem.service;
 
+import java.io.File;
+
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -7,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.OperationSystem.entity.Agent;
 import com.example.OperationSystem.entity.Inquiry;
+import com.example.OperationSystem.entity.Quotation;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -30,8 +34,11 @@ public class EmailService {
         context.setVariable("agentName", agent.getName());
         context.setVariable("origin", inquiry.getOrigin());
         context.setVariable("destination", inquiry.getDestination());
-        context.setVariable("freightType", inquiry.getFreightType());
-        context.setVariable("containerType", inquiry.getContainerType());
+        context.setVariable("freightType", inquiry.getFreightType() != null ? inquiry.getFreightType().getLabel() : null);
+        context.setVariable("containerType", inquiry.getContainerType() != null ? inquiry.getContainerType().getLabel() : null);
+        context.setVariable("encoterms", inquiry.getEncoterms() != null ? inquiry.getEncoterms().getLabel() : null);
+        context.setVariable("supplierLocation", inquiry.getSupplierLocation());
+        context.setVariable("dg", inquiry.getDg() != null ? inquiry.getDg().getLabel() : null);
         context.setVariable("details", inquiry.getAdditionalDetails());
 
         String html = templateEngine.process("agent-inquiry", context);
@@ -43,6 +50,9 @@ public class EmailService {
             helper.setSubject("Freight Inquiry Request - " + inquiry.getCode());
             helper.setText(html, true);
 
+            attachFile(helper, inquiry.getPlFilePath(), "PL");
+            attachFile(helper, inquiry.getCiFilePath(), "CI");
+
             mailSender.send(message);
             log.info("Email sent to agent {} for inquiry {}", agent.getEmail(), inquiry.getCode());
 
@@ -50,13 +60,31 @@ public class EmailService {
             log.error("Failed to send email to agent {}: {}", agent.getEmail(), e.getMessage());
         }
     }
+
+    private void attachFile(MimeMessageHelper helper, String filePath, String label) throws MessagingException {
+        if (filePath == null || filePath.isBlank()) return;
+        File file = new File(filePath);
+        if (!file.exists()) {
+            log.warn("{} file not found at path: {}", label, filePath);
+            return;
+        }
+        helper.addAttachment(file.getName(), new FileSystemResource(file));
+    }
     
     
     @Async
-    public void sendClientQuotationEmail(Inquiry inquiry) {
+    public void sendClientQuotationEmail(Inquiry inquiry, Quotation quotation) {
         Context context = new Context();
         context.setVariable("clientName", inquiry.getClientName());
         context.setVariable("inquiryCode", inquiry.getCode());
+        context.setVariable("origin", inquiry.getOrigin());
+        context.setVariable("destination", inquiry.getDestination());
+        context.setVariable("freightType", inquiry.getFreightType() != null ? inquiry.getFreightType().getLabel() : null);
+        context.setVariable("containerType", inquiry.getContainerType() != null ? inquiry.getContainerType().getLabel() : null);
+        context.setVariable("sellingPrice", quotation.getSellingPrice() != null ? quotation.getSellingPrice() : quotation.getPrice());
+        context.setVariable("currency", quotation.getCurrency());
+        context.setVariable("transitTime", quotation.getTransitTime());
+        context.setVariable("remarks", quotation.getRemarks());
         String html = templateEngine.process("client-quotation", context);
         try {
             MimeMessage message = mailSender.createMimeMessage();

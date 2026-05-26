@@ -42,8 +42,8 @@ public class InquirySummaryResponse {
                 .freightType(i.getFreightType().name())
                 .containerType(i.getContainerType().name())
                 .status(i.getStatus().name())
-                .CreatedBy(i.getCreatedBy() != null ? i.getCreatedBy().getUsername() : null)
-                .AssignedTo(i.getAssignedTo() != null ? i.getAssignedTo().getUsername() : null)
+                .CreatedBy(i.getCreatedBy() != null ? i.getCreatedBy().getDisplayName() : null)
+                .AssignedTo(i.getAssignedTo() != null ? i.getAssignedTo().getDisplayName() : null)
                 .createdAt(i.getCreatedAt().toString())
                 .updatedAt(i.getUpdatedAt().toString())
                 .build();

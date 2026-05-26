@@ -1,4 +1,5 @@
 package com.example.OperationSystem.dto.response;
+
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ public class StatusHistoryResponse {
 
     private InquiryStatus fromStatus;
     private InquiryStatus toStatus;
-    private String changedBy;            // just the name
+    private String changedBy;
     private String note;
     private LocalDateTime changedAt;
 
@@ -20,7 +21,7 @@ public class StatusHistoryResponse {
         return StatusHistoryResponse.builder()
                 .fromStatus(h.getFromStatus())
                 .toStatus(h.getToStatus())
-                .changedBy(h.getChangedBy() != null ? h.getChangedBy().getName() : "System")
+                .changedBy(h.getChangedBy() != null ? h.getChangedBy().getDisplayName() : "System")
                 .note(h.getNote())
                 .changedAt(h.getChangedAt())
                 .build();
