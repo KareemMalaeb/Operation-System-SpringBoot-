@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.OperationSystem.dto.request.AddQuotationRequest;
 import com.example.OperationSystem.dto.request.AssignRequest;
 import com.example.OperationSystem.dto.request.InquiryRequest;
-import com.example.OperationSystem.dto.request.SelectQuoteRequest;
 import com.example.OperationSystem.dto.request.SendToAgentsRequest;
 import com.example.OperationSystem.dto.request.UpdateStatusRequest;
 import com.example.OperationSystem.dto.response.InquiryResponse;
@@ -101,27 +99,11 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryService.updateStatus(id, request.getStatus(), request.getNote(), currentUser));
     }
 
-    @PostMapping("/inquiries/{id}/quotations")
-    public ResponseEntity<InquiryResponse> addQuotation(
-        @PathVariable Long id,
-        @RequestBody AddQuotationRequest request,
-        @AuthenticationPrincipal User currentUser){
-            return ResponseEntity.ok(quotationService.addQuotation(id, request, currentUser));
-        }
-    
     @GetMapping("/inquiries/{id}/quotations")
     public ResponseEntity<List<QuotationResponse>> getQuotations(
         @PathVariable Long id,
         @AuthenticationPrincipal User currentUser) {
             return ResponseEntity.ok(quotationService.getQuotations(id, currentUser));
-        }
-
-    @PatchMapping("/inquiries/{id}/quotations/select")
-    public ResponseEntity<InquiryResponse> selectQuote(
-        @PathVariable Long id,
-        @Valid @RequestBody SelectQuoteRequest request,
-        @AuthenticationPrincipal User currentUser) {
-            return ResponseEntity.ok(quotationService.selectQuote(id, request.getQuotationId(), request.getSellingPrice(), currentUser));
         }
 
     // sendToClient will fire the actual email to the client
