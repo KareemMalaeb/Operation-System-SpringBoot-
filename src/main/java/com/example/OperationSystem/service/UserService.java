@@ -24,14 +24,14 @@ public class UserService {
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UserResponse::form)
+                .map(UserResponse::from)
                 .toList();
     }
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
-        return UserResponse.form(user);
+        return UserResponse.from(user);
     }
 
     @Transactional

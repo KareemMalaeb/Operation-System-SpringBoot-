@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.OperationSystem.enums.Role;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +47,10 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    private BigDecimal monthlyTarget;
+
+    private BigDecimal yearlyTarget;
 
     @Override
     public String getUsername() { return email; }

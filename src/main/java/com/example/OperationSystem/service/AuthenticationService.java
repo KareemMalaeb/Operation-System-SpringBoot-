@@ -31,8 +31,10 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
+        user.setMonthlyTarget(request.getMonthlyTarget());
+        user.setYearlyTarget(request.getYearlyTarget());
         User saved = userRepository.save(user);
-        return new RegisterResponse(saved.getId(), saved.getDisplayName(), saved.getEmail(), request.getRole().name());
+        return new RegisterResponse(saved.getId(), saved.getDisplayName(), saved.getEmail(), request.getRole().name(), request.getMonthlyTarget(), request.getYearlyTarget());
     }
 
     public LoginResponse login(LoginRequest request) {

@@ -81,10 +81,10 @@ public class EmailService {
         context.setVariable("destination", inquiry.getDestination());
         context.setVariable("freightType", inquiry.getFreightType() != null ? inquiry.getFreightType().getLabel() : null);
         context.setVariable("containerType", inquiry.getContainerType() != null ? inquiry.getContainerType().getLabel() : null);
-        context.setVariable("sellingPrice", quotation.getSellingPrice() != null ? quotation.getSellingPrice() : quotation.getPrice());
-        context.setVariable("currency", quotation.getCurrency());
+        context.setVariable("sellingPrice", inquiry.getSellingPrice());
+        context.setVariable("currency", inquiry.getSellingCurrency());
         context.setVariable("transitTime", quotation.getTransitTime());
-        context.setVariable("remarks", quotation.getRemarks());
+        context.setVariable("remarks", inquiry.getClientOfferNotes() != null ? inquiry.getClientOfferNotes() : quotation.getRemarks());
         String html = templateEngine.process("client-quotation", context);
         try {
             MimeMessage message = mailSender.createMimeMessage();

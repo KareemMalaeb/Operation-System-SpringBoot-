@@ -13,6 +13,8 @@ import com.example.OperationSystem.exceptions.ResourceNotFoundException;
 import com.example.OperationSystem.repository.AgentRepository;
 import com.example.OperationSystem.repository.InquiryAgentRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,7 @@ public class AgentService {
     private final AgentRepository agentrepository;
     private final InquiryAgentRepository inquiryAgentRepository;
     
+    @CacheEvict(value = "agents", allEntries = true)
     public AgentResponse createAgent(CreateAgentRequest request, User currentUser) {
 
         if(agentrepository.existsByEmail(request.getEmail())){
@@ -40,6 +43,7 @@ public class AgentService {
         return AgentResponse.from(agentrepository.save(agent));
     }
 
+    @Cacheable("agents")
     public List<AgentResponse> getAllAgents(User currentUser) {
     
         return agentrepository.findAll()
@@ -56,6 +60,7 @@ public class AgentService {
     }
 
     @Transactional
+    @CacheEvict(value = "agents", allEntries = true)
     public void deleteAgentById(Long id, User currentUser) {
         Agent agent = agentrepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Agent not found with id: " + id));
@@ -63,6 +68,7 @@ public class AgentService {
         agentrepository.delete(agent);
     }
 
+    @CacheEvict(value = "agents", allEntries = true)
     public AgentResponse updateAgent(Long id, CreateAgentRequest request, User currentUser) {
 
     // Step 1 — Find existing agent or throw 404

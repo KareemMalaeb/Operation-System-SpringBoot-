@@ -23,10 +23,8 @@ import com.example.OperationSystem.dto.request.SendToAgentsRequest;
 import com.example.OperationSystem.dto.request.UpdateStatusRequest;
 import com.example.OperationSystem.dto.response.InquiryResponse;
 import com.example.OperationSystem.dto.response.InquirySummaryResponse;
-import com.example.OperationSystem.dto.response.QuotationResponse;
 import com.example.OperationSystem.entity.User;
 import com.example.OperationSystem.service.InquiryService;
-import com.example.OperationSystem.service.QuotationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +35,6 @@ import lombok.RequiredArgsConstructor;
 public class InquiryController {
 
     private final InquiryService inquiryService;
-    private final QuotationService quotationService;
-
     @PostMapping("/inquiries")
     public ResponseEntity<InquiryResponse> createInquiry(
         @RequestBody InquiryRequest request,
@@ -88,7 +84,7 @@ public class InquiryController {
         @PathVariable Long id,
         @Valid @RequestBody SendToAgentsRequest request,
         @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(quotationService.sendToAgents(id, request, currentUser));
+        return ResponseEntity.ok(inquiryService.sendToAgents(id, request, currentUser));
     }
 
     @PatchMapping("/inquiries/{id}/status")
@@ -99,20 +95,7 @@ public class InquiryController {
         return ResponseEntity.ok(inquiryService.updateStatus(id, request.getStatus(), request.getNote(), currentUser));
     }
 
-    @GetMapping("/inquiries/{id}/quotations")
-    public ResponseEntity<List<QuotationResponse>> getQuotations(
-        @PathVariable Long id,
-        @AuthenticationPrincipal User currentUser) {
-            return ResponseEntity.ok(quotationService.getQuotations(id, currentUser));
-        }
 
-    // sendToClient will fire the actual email to the client
-    @PostMapping("/inquiries/{id}/send-to-client")
-    public ResponseEntity<InquiryResponse> sendToClient(
-        @PathVariable Long id,
-        @AuthenticationPrincipal User currentUser) {
-            return ResponseEntity.ok(quotationService.sendToClient(id, currentUser));
-    }
 
     @PostMapping("/inquiries/{id}/documents")
     public ResponseEntity<InquiryResponse> uploadDocuments(

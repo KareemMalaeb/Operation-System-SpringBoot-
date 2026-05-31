@@ -1,5 +1,7 @@
 package com.example.OperationSystem.dto.response;
 
+import java.math.BigDecimal;
+
 import com.example.OperationSystem.entity.Inquiry;
 
 import lombok.Data;
@@ -29,6 +31,9 @@ public class InquiryResponse {
     private String assignedTo;
     private String createdAt;
     private String updatedAt;
+    private BigDecimal sellingPrice;
+    private String sellingCurrency;
+    private String clientOfferNotes;
 
     public static InquiryResponse from(Inquiry i) {
         InquiryResponse r = new InquiryResponse();
@@ -52,6 +57,9 @@ public class InquiryResponse {
         r.setAssignedTo(i.getAssignedTo() != null ? i.getAssignedTo().getDisplayName() : null);
         r.setCreatedAt(i.getCreatedAt() != null ? i.getCreatedAt().toString() : null);
         r.setUpdatedAt(i.getUpdatedAt() != null ? i.getUpdatedAt().toString() : null);
+        r.setSellingPrice(i.getSellingPrice());
+        r.setSellingCurrency(i.getSellingCurrency());
+        r.setClientOfferNotes(i.getClientOfferNotes());
         return r;
     }
 }

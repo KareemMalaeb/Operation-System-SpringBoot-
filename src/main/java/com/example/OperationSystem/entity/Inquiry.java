@@ -1,5 +1,6 @@
 package com.example.OperationSystem.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.example.OperationSystem.enums.FreightType;
@@ -72,7 +73,16 @@ public class Inquiry {
     private String ciFilePath;
 
     private String additionalDetails;
+    
+    @Column
+    private BigDecimal sellingPrice;
 
+    @Column(length = 10)
+    private String sellingCurrency;
+
+    @Column(columnDefinition = "TEXT")
+    private String clientOfferNotes;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

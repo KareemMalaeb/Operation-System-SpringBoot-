@@ -14,7 +14,7 @@ public class UserResponse {
     private String email;
     private String role;
 
-    public static UserResponse form(User user) {
+    public static UserResponse from(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getDisplayName())

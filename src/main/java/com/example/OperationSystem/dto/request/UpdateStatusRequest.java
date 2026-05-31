@@ -5,7 +5,7 @@ import com.example.OperationSystem.enums.InquiryStatus;
 import lombok.Data;
 @Data
 public class UpdateStatusRequest {
-    private InquiryStatus Status;
+    private InquiryStatus status;
     private String note;
     
 }

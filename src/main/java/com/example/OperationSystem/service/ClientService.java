@@ -24,6 +24,8 @@ import com.example.OperationSystem.entity.User;
 import com.example.OperationSystem.exceptions.BusinessException;
 import com.example.OperationSystem.repository.ClientRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class ClientService {
     private final ClientRepository clientRepository;
 
+    @CacheEvict(value = "clients", key = "#currentUser.id")
     public AddClientResponse addClient(AddClientRequest request, User currentUser) {
         if (clientRepository.existsByCompanyName(request.getCompanyName())) {
             throw new BusinessException("Client with company name " + request.getCompanyName() + " already exists");
@@ -48,6 +51,7 @@ public class ClientService {
         return AddClientResponse.from(clientRepository.save(client));
     }
     
+    @Cacheable(value = "clients", key = "#currentUser.id")
     public List<AddClientResponse> getAllClients(User currentUser) {
         return clientRepository.findByCreatedBy(currentUser).stream()
                 .map(AddClientResponse::from)
@@ -60,6 +64,7 @@ public class ClientService {
                 .orElseThrow(() -> new BusinessException("Client not found with id: " + id));
     }
 
+    @CacheEvict(value = "clients", key = "#currentUser.id")
     public AddClientResponse updateClientById(long id, AddClientRequest request, User currentUser) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
@@ -76,6 +81,7 @@ public class ClientService {
     
     }
 
+    @CacheEvict(value = "clients", key = "#currentUser.id")
     public void deleteClientById(long id, User currentUser) {
       Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));        

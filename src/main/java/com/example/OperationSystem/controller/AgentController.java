@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class AgentContoller {
+public class AgentController {
     private final AgentService agentService;
 
     @PostMapping("/agents")

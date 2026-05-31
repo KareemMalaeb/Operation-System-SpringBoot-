@@ -3,8 +3,14 @@ package com.example.OperationSystem.config;
 import com.example.OperationSystem.security.CustomUserDetailsService;
 import com.example.OperationSystem.security.JwtFilter;
 
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.databind.cfg.CoercionAction;
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -21,6 +27,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableAsync
+@EnableCaching
 public class AppConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
@@ -32,6 +39,21 @@ public class AppConfig {
         this.customUserDetailsService = customUserDetailsService;
         this.jwtFilter = jwtFilter;
         this.corsConfigurationSource = corsConfigurationSource;
+    }
+
+    @Bean
+    Jackson2ObjectMapperBuilderCustomizer jacksonEnumCoercion() {
+        return builder -> builder.postConfigurer(mapper ->
+            mapper.coercionConfigFor(Enum.class)
+                  .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull)
+        );
+    }
+
+    @Bean
+    FilterRegistrationBean<JwtFilter> jwtFilterRegistration(JwtFilter jwtFilter) {
+        FilterRegistrationBean<JwtFilter> registration = new FilterRegistrationBean<>(jwtFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -62,17 +84,23 @@ public class AppConfig {
                 .requestMatchers("/public/**", "/api/auth/login", "/api/enums").permitAll()
                 .requestMatchers("/api/auth/register").hasRole("MANAGER")
                 
-                .requestMatchers("/api/users/**").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.GET, "/api/users", "/api/users/**").hasAnyRole("SALES", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/users").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("MANAGER")
                 
                 .requestMatchers(HttpMethod.POST, "/api/inquiries").hasAnyRole("SALES", "OPERATOR", "MANAGER")
                 .requestMatchers(HttpMethod.GET, "/api/inquiries").hasAnyRole("SALES", "OPERATOR", "MANAGER")
                 .requestMatchers("/api/inquiries/{id}/assign").hasAnyRole("SALES", "OPERATOR", "MANAGER")
                 .requestMatchers("/api/inquiries/{id}/agents/send").hasAnyRole("OPERATOR", "MANAGER")
-                .requestMatchers("/api/inquiries/*/quotations").hasAnyRole("OPERATOR", "MANAGER")
+                .requestMatchers(HttpMethod.GET,  "/api/inquiries/*/quotations").hasAnyRole("SALES", "OPERATOR", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/inquiries/*/quotations").hasAnyRole("OPERATOR", "MANAGER")
                 .requestMatchers("/api/inquiries/*/quotations/select").hasAnyRole("OPERATOR", "MANAGER")
                 .requestMatchers("/api/inquiries/*/send-to-client").hasAnyRole("OPERATOR", "MANAGER")
 
                 .requestMatchers("/api/agents/**").hasAnyRole("OPERATOR", "MANAGER")
+
+                .requestMatchers("/api/invoices/**").hasAnyRole("SALES", "OPERATOR", "MANAGER")
+                .requestMatchers("/api/reports/**").hasAnyRole("SALES", "OPERATOR", "MANAGER")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

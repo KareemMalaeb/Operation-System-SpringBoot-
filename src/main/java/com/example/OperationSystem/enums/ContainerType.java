@@ -1,8 +1,9 @@
 package com.example.OperationSystem.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 public enum ContainerType {
-   
-    // value = enum name, label = user-friendly string for UI dropdowns
+
     Standard20ft(" 20ft"),
     Standard40ft(" 40ft"),
     HighCube20ft(" 20ft HQ"),
@@ -22,13 +23,15 @@ public enum ContainerType {
     DoubleDoor20ft("Double Door 20ft"),
     DoubleDoor40ft("Double Door 40ft");
 
-  
-// Constructor to set the label for each enum constant
-    ContainerType(String label) { 
-        this.label = label; }
+    ContainerType(String label) { this.label = label; }
 
     private final String label;
-    
-    public String getLabel() { 
-        return label; }
+
+    public String getLabel() { return label; }
+
+    @JsonCreator
+    public static ContainerType fromValue(String value) {
+        if (value == null || value.isBlank()) return null;
+        return ContainerType.valueOf(value);
+    }
 }

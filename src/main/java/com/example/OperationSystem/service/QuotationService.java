@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.OperationSystem.dto.request.AddQuotationRequest;
-import com.example.OperationSystem.dto.request.SendToAgentsRequest;
+import com.example.OperationSystem.dto.request.SendToClientRequest;
 import com.example.OperationSystem.dto.response.InquiryResponse;
 import com.example.OperationSystem.dto.response.QuotationResponse;
 import com.example.OperationSystem.entity.Agent;
@@ -38,44 +38,7 @@ public class QuotationService {
     private final EmailService emailService;
     private final StatusHistoryRepository statusHistoryRepository;
     private final QuotationRepository quotationRepository;
-
-    // ____________________Send to Agents____________________
-    
-    public InquiryResponse sendToAgents(Long inquiryId, SendToAgentsRequest request, User currentUser) {
-        Inquiry inquiry = findInquiry(inquiryId);
-
-        for (Long agentId : request.getAgentIds()) {
-            // Skip if this agent is already linked to this inquiry
-            if (inquiryAgentRepository.existsByInquiryIdAndAgentId(inquiryId, agentId)) {
-                continue;
-            }
-
-            Agent agent = agentRepository.findById(agentId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + agentId));
-
-            // Save the link record
-            InquiryAgent link = InquiryAgent.builder()
-                    .inquiry(inquiry)
-                    .agent(agent)
-                    .status(AgentStatus.SENT)
-                    .sentAt(LocalDateTime.now())
-                    .build();
-            inquiryAgentRepository.save(link);
-
-            // Fire email in background thread — does not block the response
-            emailService.SendAgentInquiryEmail(agent, inquiry);
-        }
-
-        // Update status to SENT_TO_AGENTS
-        InquiryStatus prev = inquiry.getStatus();
-        inquiry.setStatus(InquiryStatus.SENT_TO_AGENTS);
-        inquiryRepository.save(inquiry);
-
-        logHistory(inquiry, prev, InquiryStatus.SENT_TO_AGENTS, currentUser,
-                "Sent to " + request.getAgentIds().size() + " agents");
-
-        return InquiryResponse.from(inquiry);
-    }
+    private final NotificationService notificationService;
 
     //______________________Add Quotation______________________
     
@@ -111,8 +74,14 @@ public class QuotationService {
 
         logHistory(inquiry, prev, InquiryStatus.RECEIVING_QUOTES, currentUser,
                 "Quotation received from " + agent.getName() + " — " + request.getPrice() + " " + request.getCurrency());
-
-        return InquiryResponse.from(inquiry);        
+        
+        notificationService.createNotification(
+                inquiry.getCreatedBy(),
+                "A quotation was received for inquiry " + inquiry.getCode() + ", check the price",
+                inquiry.getId()
+        );
+        
+            return InquiryResponse.from(inquiry);        
         
     }
 
@@ -127,7 +96,7 @@ public class QuotationService {
 
     //______________________Select Quote______________________
     
-    public InquiryResponse selectQuote(long inquiryId, Long quotationId, BigDecimal sellingPrice, User currentUser) {
+    public InquiryResponse selectQuote(long inquiryId, Long quotationId, BigDecimal sellingPrice, String sellingCurrency, String clientOfferNotes, User currentUser) {
         Inquiry inquiry = findInquiry(inquiryId);
 
         List<Quotation> allQuotes = quotationRepository.findByInquiry(inquiry);
@@ -152,9 +121,12 @@ public class QuotationService {
         selected.setSellingPrice(sellingPrice);
         quotationRepository.save(selected);
 
-        // Move status to QUOTES_COMPLETED
+        // Move status to QUOTES_COMPLETED and set selling details
         InquiryStatus prev = inquiry.getStatus();
         inquiry.setStatus(InquiryStatus.QUOTES_COMPLETED);
+        inquiry.setSellingPrice(sellingPrice);
+        inquiry.setSellingCurrency(sellingCurrency);
+        inquiry.setClientOfferNotes(clientOfferNotes);
         inquiryRepository.save(inquiry);
 
         logHistory(inquiry, prev, InquiryStatus.QUOTES_COMPLETED, currentUser,
@@ -164,7 +136,7 @@ public class QuotationService {
     }
     //_____________________Send to Client______________________
     
-    public InquiryResponse sendToClient(Long id, User currentUser) {
+    public InquiryResponse sendToClient(Long id, SendToClientRequest request, User currentUser) {
         Inquiry inquiry = findInquiry(id);
 
         Quotation selected = quotationRepository.findByInquiryAndIsSelectedTrue(inquiry)
@@ -172,11 +144,19 @@ public class QuotationService {
 
         InquiryStatus prev = inquiry.getStatus();
         inquiry.setStatus(InquiryStatus.QUOTED_TO_CLIENT);
+        inquiry.setSellingPrice(request.getSellingPrice());
+        inquiry.setSellingCurrency(request.getSellingCurrency());
+        inquiry.setClientOfferNotes(request.getClientOfferNotes());
         inquiryRepository.save(inquiry);
 
         logHistory(inquiry, prev, InquiryStatus.QUOTED_TO_CLIENT, currentUser,
                 "Final quotation sent to client");
 
+        notificationService.createNotification(
+                inquiry.getCreatedBy(),
+                "The quotation for inquiry " + inquiry.getCode() + " has been shared with the client",
+                inquiry.getId()
+        );
         emailService.sendClientQuotationEmail(inquiry, selected);
 
         return InquiryResponse.from(inquiry);

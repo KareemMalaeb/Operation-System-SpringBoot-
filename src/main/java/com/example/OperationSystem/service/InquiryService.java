@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -16,16 +17,23 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.OperationSystem.dto.request.AssignRequest;
+import com.example.OperationSystem.dto.request.SendToAgentsRequest;
 import com.example.OperationSystem.dto.request.InquiryRequest;
 import com.example.OperationSystem.dto.response.InquiryResponse;
 import com.example.OperationSystem.dto.response.InquirySummaryResponse;
+import com.example.OperationSystem.entity.Agent;
 import com.example.OperationSystem.entity.Inquiry;
+import com.example.OperationSystem.entity.InquiryAgent;
 import com.example.OperationSystem.entity.StatusHistory;
 import com.example.OperationSystem.entity.User;
+import com.example.OperationSystem.enums.AgentStatus;
 import com.example.OperationSystem.enums.InquiryStatus;
 import com.example.OperationSystem.enums.Role;
+import com.example.OperationSystem.exceptions.ResourceNotFoundException;
+import com.example.OperationSystem.repository.AgentRepository;
 import com.example.OperationSystem.repository.InquiryAgentRepository;
 import com.example.OperationSystem.repository.InquiryRepository;
+import com.example.OperationSystem.repository.InvoiceRepository;
 import com.example.OperationSystem.repository.QuotationRepository;
 import com.example.OperationSystem.repository.StatusHistoryRepository;
 import com.example.OperationSystem.repository.UserRepository;
@@ -41,6 +49,10 @@ public class InquiryService {
     private final UserRepository userRepository;
     private final InquiryAgentRepository inquiryAgentRepository;
     private final QuotationRepository quotationRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final NotificationService notificationService;
+    private final AgentRepository agentRepository;
+    private final EmailService emailService;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -131,12 +143,18 @@ public class InquiryService {
 
     @Transactional
     public InquiryResponse assignInquiry(Long id, AssignRequest request, User currentUser) {
-        if (currentUser.getRole() != Role.MANAGER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only managers can assign inquiries");
-        }
-
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquiry not found"));
+
+        boolean canAssign = switch (currentUser.getRole()) {
+            case MANAGER  -> true;
+            case SALES    -> inquiry.getCreatedBy() != null
+                             && inquiry.getCreatedBy().getId().equals(currentUser.getId());
+            case OPERATOR -> false;
+        };
+        if (!canAssign) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
 
         User operator = userRepository.findById(request.getOperatorId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operator not found"));
@@ -152,6 +170,12 @@ public class InquiryService {
 
         logHistory(saved, prev, InquiryStatus.ASSIGNED, currentUser,
                 "Assigned to " + operator.getUsername() + " (Operator)");
+
+        notificationService.createNotification(
+                operator,
+                "Inquiry " + saved.getCode() + " has been assigned to you",
+                saved.getId()
+        );
 
         return InquiryResponse.from(saved);
     }
@@ -183,6 +207,7 @@ public class InquiryService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
+        invoiceRepository.deleteByInquiry(inquiry);
         inquiryAgentRepository.deleteByInquiry(inquiry);
         quotationRepository.deleteByInquiry(inquiry);
         statusHistoryRepository.deleteByInquiry(inquiry);
@@ -241,6 +266,39 @@ public class InquiryService {
         }
         // save inquiry
         return InquiryResponse.from(inquiryRepository.save(inquiry));
+    }
+
+    public InquiryResponse sendToAgents(Long inquiryId, SendToAgentsRequest request, User currentUser) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquiry not found"));
+
+        for (Long agentId : request.getAgentIds()) {
+            if (inquiryAgentRepository.existsByInquiryIdAndAgentId(inquiryId, agentId)) {
+                continue;
+            }
+            Agent agent = agentRepository.findById(agentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + agentId));
+            InquiryAgent link = InquiryAgent.builder()
+                    .inquiry(inquiry)
+                    .agent(agent)
+                    .status(AgentStatus.SENT)
+                    .sentAt(LocalDateTime.now())
+                    .build();
+            inquiryAgentRepository.save(link);
+            emailService.SendAgentInquiryEmail(agent, inquiry);
+        }
+
+        InquiryStatus prev = inquiry.getStatus();
+        inquiry.setStatus(InquiryStatus.SENT_TO_AGENTS);
+        inquiryRepository.save(inquiry);
+        logHistory(inquiry, prev, InquiryStatus.SENT_TO_AGENTS, currentUser,
+                "Sent to " + request.getAgentIds().size() + " agents");
+        notificationService.createNotification(
+                inquiry.getCreatedBy(),
+                "Inquiry " + inquiry.getCode() + " has been sent to agents",
+                inquiry.getId()
+        );
+        return InquiryResponse.from(inquiry);
     }
     // helper method to save file and return path
     private String saveFile(MultipartFile file, Long inquiryId, String prefix) {
