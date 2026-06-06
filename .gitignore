@@ -34,4 +34,5 @@ build/
 
 ### Secrets ###
 src/main/resources/application.properties
+.env
 uploads/
