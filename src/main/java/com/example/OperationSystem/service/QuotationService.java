@@ -13,7 +13,6 @@ import com.example.OperationSystem.dto.response.InquiryResponse;
 import com.example.OperationSystem.dto.response.QuotationResponse;
 import com.example.OperationSystem.entity.Agent;
 import com.example.OperationSystem.entity.Inquiry;
-import com.example.OperationSystem.entity.InquiryAgent;
 import com.example.OperationSystem.entity.Quotation;
 import com.example.OperationSystem.entity.StatusHistory;
 import com.example.OperationSystem.entity.User;

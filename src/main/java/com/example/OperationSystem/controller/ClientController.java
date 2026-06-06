@@ -74,8 +74,5 @@ public class ClientController {
         headers.setContentDispositionFormData("attachment", "clients-report.pdf");
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
-
-
-     
-
 }
+
